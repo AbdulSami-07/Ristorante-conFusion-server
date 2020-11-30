@@ -7,6 +7,8 @@ var ExtractJwt = require('passport-jwt').ExtractJwt;
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 
 var config = require('./config.js');
+const { authenticate } = require('passport');
+const { NotExtended } = require('http-errors');
 //we can also use our own authenticate function in LocalStrategy.
 exports.local = passport.use(new LocalStrategy(User.authenticate())); 
 
@@ -24,6 +26,7 @@ var opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = config.secretKey;
 
+
 exports.jwtPassport = passport.use(new JwtStrategy(opts,
     (jwt_payload, done) => {
         console.log("JWT payload: ", jwt_payload);
@@ -40,4 +43,15 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
         });
     }));
 
+exports.verifyAdmin =( (req,res,next) => {
+    if (req.user.admin){
+        next();
+    }
+    else{
+        err = new Error( "You are not authorized to perform this operation!");
+        err.status = 403;
+        return next(err);
+    }
+    
+});
 exports.verifyUser = passport.authenticate('jwt', {session: false});
